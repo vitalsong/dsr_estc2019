@@ -1,15 +1,19 @@
 ﻿#include "main.h"
 #include "stm32f4xx_rcc.h"
 
+//-------------------------------------------------------------------------------------------
+//BLINKING LED WITH TIMER INTERRUPT
+//-------------------------------------------------------------------------------------------
+
 #define SYSCLK (84000000)
 #define AHB_PRESC (1)
 #define APB1_PRESC (4)
 #define APBX (1)
-#define TIM_CLOCK (SYSCLK / AHB_PRESC / APB1_PRESC * APBX)
+#define TIM_CLOCK ((SYSCLK) / (AHB_PRESC) / (APB1_PRESC) * (APBX))
 #define TIM_PRESCALER (8400)
-#define CLK_PER_SEC (TIM_CLOCK / PRESCALER)
+#define CLK_PER_SEC ((TIM_CLOCK) / (TIM_PRESCALER))
 #define BLINK_PERIOD_MSEC (1000)
-#define BLINK_PERIOD_CLK (CLK_PER_SEC * BLINK_PERIOD_MSEC / 1000)
+#define BLINK_PERIOD_CLK ((CLK_PER_SEC) * ((BLINK_PERIOD_MSEC) / 1000))
 
 //-------------------------------------------------------------------------------------------
 static volatile uint16_t g_current_led = GPIO_Pin_8;
@@ -96,7 +100,7 @@ static void _InitTimer(void)
 
     param.TIM_Prescaler = TIM_PRESCALER - 1;
     param.TIM_CounterMode = TIM_CounterMode_Up;
-    param.TIM_Period = BLINK_PERIOD_MSEC - 1;
+    param.TIM_Period = BLINK_PERIOD_CLK - 1;
     param.TIM_ClockDivision = TIM_CKD_DIV1;
     param.TIM_RepetitionCounter = 0;
     TIM_TimeBaseInit(TIM2, &param);
@@ -105,7 +109,22 @@ static void _InitTimer(void)
 }
 
 //-------------------------------------------------------------------------------------------
-int main(void)
+static void _BlinkByTimerCounter()
+{
+    _InitClock();
+    _InitLed();
+
+    while(1)
+    {
+        uint32_t value = TIM_GetCounter(TIM2);
+        if (value == BLINK_PERIOD_CLK) {
+            _NextLedColor();
+        }
+    }
+}
+
+//-------------------------------------------------------------------------------------------
+static void _BlinkByTimerInterrupt()
 {
     _InitClock();
     _InitLed();
@@ -115,4 +134,16 @@ int main(void)
     while(1) {
         //nothing to do
     }
+}
+
+//-------------------------------------------------------------------------------------------
+int main(void)
+{
+#if defined(LAB2_BLINK_BY_INTERRUPT)
+    _BlinkByTimerInterrupt();
+#elif defined(LAB2_BLINK_BY_COUNTER)
+    _BlinkByTimerCounter();
+#else
+    _BlinkByTimerInterrupt();
+#endif
 }
