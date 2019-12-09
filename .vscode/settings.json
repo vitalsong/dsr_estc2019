@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "stm32f4xx.h": "c",
+        "stm32f4xx_rcc.h": "c",
+        "core_cm4.h": "c",
+        "stdint.h": "c",
+        "ledctrl.h": "c"
+    }
+}
