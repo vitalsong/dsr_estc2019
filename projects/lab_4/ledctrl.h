@@ -1,9 +1,6 @@
-#ifndef LEDCTRL_H
-#define LEDCTRL_H
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stm32f4xx.h>
 
 //led mode
 enum LedMode
@@ -14,35 +11,85 @@ enum LedMode
 };
 
 //led color struct
+//TODO: use hex format instead?
 typedef struct 
 {
-    int r;  //red [0 - 255]
-    int g;  //green [0 - 255]
-    int b;  //blue [0 - 255]
-    int a;  //brightness [0 - 255]
+    uint8_t r;  //red [0 - 255]
+    uint8_t g;  //green [0 - 255]
+    uint8_t b;  //blue [0 - 255]
+    uint8_t a;  //brightness [0 - 255]
 }
 LedColor;
 
-//enable led
-void LedCtrl_On(int led_num);
+typedef struct 
+{
+    uint16_t r_pin;
+    uint16_t g_pin;
+    uint16_t b_pin;
+}
+PinGroup;
 
-//disable led
-void LedCtrl_Off(int led_num);
+typedef uint32_t LedFd;
 
-//get current mode
-enum LedMode LedCtrl_GetMode(int led_num);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-//set stable mode
-void LedCtrl_SetStable(int led_num, const LedColor* color);
+/**
+ * @brief Module init
+ * @warning Must be called first
+ */
+void LedCtrl_Init(void);
 
-//set pulse mode
-void LedCtrl_SetPulseFreq(int led_num, const LedColor* color, int freq);
+/**
+ * @brief Configurate led
+ * @param GPIOx Gpio port
+ * @param group Group of pin for control
+ * @return LedFd Led descriptor
+ */
+LedFd LedCtrl_Config(GPIO_TypeDef* GPIOx, PinGroup group);
 
-//set gradient mode
-void LedCtrl_SetGradientMode(int led_num);
+/**
+ * @brief Enable led
+ * @param led Led descriptor
+ */
+void LedCtrl_On(LedFd led);
+
+/**
+ * @brief Disable led
+ * @param led Led descriptor
+ */
+void LedCtrl_Off(LedFd led);
+
+/**
+ * @brief Get current view mode
+ * @param led Led descriptor
+ * @return enum LedMode Current view mode
+ */
+enum LedMode LedCtrl_GetMode(LedFd led);
+
+/**
+ * @brief Set stable view mode
+ * @param led Led descriptor
+ * @param color Led color
+ */
+void LedCtrl_SetStable(LedFd led, LedColor color);
+
+/**
+ * @brief Set pulse mode
+ * @param led Led descriptor
+ * @param color Led color
+ * @param freq Pulse freq
+ */
+void LedCtrl_SetPulseFreq(LedFd led, LedColor color, int freq);
+
+/**
+ * @brief Set gradient mode
+ * @param led Led descriptor
+ */
+void LedCtrl_SetGradientMode(LedFd led);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* LEDCTRL_H */

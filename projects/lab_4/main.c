@@ -4,6 +4,17 @@
 #include <stm32f4xx_tim.h>
 #include "ledctrl.h"
 
+#define SWITCH_DELAY (100000)
+
+//-------------------------------------------------------------------------------------------
+static void _DirtyDelay(void)
+{
+    int i;
+    for (i = 0; i < SWITCH_DELAY; i++);
+}
+
+static uint32_t g_led = 0;
+
 //-------------------------------------------------------------------------------------------
 static void _InitClock(void)
 {
@@ -16,7 +27,7 @@ static void _InitClock(void)
 }
 
 //-------------------------------------------------------------------------------------------
-static void _InitButtons()
+static void _InitButtons(void)
 {
     GPIO_InitTypeDef port;
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
@@ -30,15 +41,15 @@ static void _InitButtons()
 }
 
 //-------------------------------------------------------------------------------------------
-static void _OnClickButton1()
+static void _OnClickButton1(void)
 {
-    //...
+    LedCtrl_On(g_led);
 }
 
 //-------------------------------------------------------------------------------------------
-static void _OnClickButton2()
+static void _OnClickButton2(void)
 {
-    //...
+    LedCtrl_Off(g_led);
 }
 
 //-------------------------------------------------------------------------------------------
@@ -50,8 +61,22 @@ int main(void)
     //init user buttons
     _InitButtons();
 
+    //init module
+    LedCtrl_Init();
+
     //init led
-    LedCtrl_On(0);
+    PinGroup g;
+    g.r_pin = GPIO_Pin_8;
+    g.g_pin = GPIO_Pin_9;
+    g.b_pin = GPIO_Pin_10;
+    g_led = LedCtrl_Config(GPIOA, g);
+
+    LedColor color;
+    color.r = 0;
+    color.g = 0;
+    color.b = 255;
+    color.a = 255;
+    LedCtrl_SetStable(g_led, color);
 
     while(1)
     {
@@ -64,6 +89,6 @@ int main(void)
         }
 
         //delay
-        //...
+        _DirtyDelay();
     }
 }

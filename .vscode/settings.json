@@ -4,6 +4,7 @@
         "stm32f4xx_rcc.h": "c",
         "core_cm4.h": "c",
         "stdint.h": "c",
-        "ledctrl.h": "c"
+        "ledctrl.h": "c",
+        "assert.h": "c"
     }
 }

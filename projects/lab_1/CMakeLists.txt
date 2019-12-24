@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(my_test LANGUAGES C)
+project(lab1 LANGUAGES C)
 set(CMAKE_C_STANDARD 90)
 
 set(BUILD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../..)

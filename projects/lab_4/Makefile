@@ -1,5 +1,5 @@
 BUILD_ROOT=../..
-OBJS = main.o
+OBJS = main.o ledctrl.o
 
 BINARY_NAME = main
 
