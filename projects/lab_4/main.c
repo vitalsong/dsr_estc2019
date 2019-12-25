@@ -13,7 +13,7 @@ static void _DirtyDelay(void)
     for (i = 0; i < SWITCH_DELAY; i++);
 }
 
-static uint32_t g_led = 0;
+static LedFd g_led = 0;
 
 //-------------------------------------------------------------------------------------------
 static void _InitClock(void)
@@ -65,18 +65,11 @@ int main(void)
     LedCtrl_Init();
 
     //init led
-    PinGroup g;
-    g.r_pin = GPIO_Pin_8;
-    g.g_pin = GPIO_Pin_9;
-    g.b_pin = GPIO_Pin_10;
-    g_led = LedCtrl_Config(GPIOA, g);
+    PinGroup g = {GPIO_PinSource8, GPIO_PinSource9, GPIO_PinSource10};
+    g_led = LedCtrl_Config(GPIOA, g, TIM1);
 
-    LedColor color;
-    color.r = 0;
-    color.g = 0;
-    color.b = 255;
-    color.a = 255;
-    LedCtrl_SetStable(g_led, color);
+    //set stable color
+    LedCtrl_SetStable(g_led, 0xCD5C5C);
 
     while(1)
     {

@@ -13,7 +13,7 @@
             "problemMatcher": "$gcc",
         },
         {
-            "label": "ledctrl",
+            "label": "lab4-build",
             "type": "shell",
             "command": "make",
             "args": ["PREFIX=/home/yulis/tools/gcc-arm-none-eabi/bin/arm-none-eabi"],
@@ -22,7 +22,31 @@
                 "isDefault": true
             },
             "problemMatcher": "$gcc",
-            "options": {"cwd": "${workspaceFolder}/projects/lab_4/ledctrl"},
+            "options": {"cwd": "${workspaceFolder}/projects/lab_4"},
+        },
+        {
+            "label": "lab4-clean",
+            "type": "shell",
+            "command": "make",
+            "args": ["clean", "PREFIX=/home/yulis/tools/gcc-arm-none-eabi/bin/arm-none-eabi"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc",
+            "options": {"cwd": "${workspaceFolder}/projects/lab_4"},
+        },
+        {
+            "label": "lab4-flash",
+            "type": "shell",
+            "command": "make",
+            "args": ["flash", "PREFIX=/home/yulis/tools/gcc-arm-none-eabi/bin/arm-none-eabi"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc",
+            "options": {"cwd": "${workspaceFolder}/projects/lab_4"},
         }
     ]
 }

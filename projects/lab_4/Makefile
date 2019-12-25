@@ -4,10 +4,10 @@ OBJS = main.o
 BINARY_NAME = main
 LEDCTRL_PATH = ./ledctrl
 
-include $(BUILD_ROOT)/common_defs.mk
-
 LIB_DIRS  += $(LEDCTRL_PATH)
 LDLIBS += -lledctrl
+
+include $(BUILD_ROOT)/common_defs.mk
 
 .PHONY: all ledctrl $(BINARY_NAME)
 

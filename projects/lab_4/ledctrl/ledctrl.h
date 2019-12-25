@@ -2,6 +2,10 @@
 
 #include <stm32f4xx.h>
 
+#define COLOR_RED (0xFF0000)
+#define COLOR_GREEN (0x00FF00)
+#define COLOR_BLUE (0x0000FF)
+
 //led mode
 enum LedMode
 {
@@ -10,26 +14,19 @@ enum LedMode
     LED_MODE_GRADIENT
 };
 
-//led color struct
-//TODO: use hex format instead?
-typedef struct 
-{
-    uint8_t r;  //red [0 - 255]
-    uint8_t g;  //green [0 - 255]
-    uint8_t b;  //blue [0 - 255]
-    uint8_t a;  //brightness [0 - 255]
-}
-LedColor;
+//led color (example 0xFF0000 for red)
+typedef uint32_t LedColor;
 
 typedef struct 
 {
-    uint16_t r_pin;
-    uint16_t g_pin;
-    uint16_t b_pin;
+    uint8_t r_pin;
+    uint8_t g_pin;
+    uint8_t b_pin;
 }
 PinGroup;
 
-typedef uint32_t LedFd;
+typedef struct _LedState _LedState;
+typedef _LedState* LedFd;
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,9 +42,10 @@ void LedCtrl_Init(void);
  * @brief Configurate led
  * @param GPIOx Gpio port
  * @param group Group of pin for control
+ * @param tim Timer for pwd (see ref manual)
  * @return LedFd Led descriptor
  */
-LedFd LedCtrl_Config(GPIO_TypeDef* GPIOx, PinGroup group);
+LedFd LedCtrl_Config(GPIO_TypeDef* GPIOx, PinGroup group, TIM_TypeDef* tim);
 
 /**
  * @brief Enable led

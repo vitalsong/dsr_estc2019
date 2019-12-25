@@ -5,6 +5,7 @@
         "core_cm4.h": "c",
         "stdint.h": "c",
         "ledctrl.h": "c",
-        "assert.h": "c"
+        "assert.h": "c",
+        "stm32f4xx_tim.h": "c"
     }
 }
