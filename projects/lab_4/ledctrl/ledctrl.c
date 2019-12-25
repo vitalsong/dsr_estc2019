@@ -70,7 +70,7 @@ enum LedMode LedCtrl_GetMode(LedFd led)
 }
 
 //------------------------------------------------------------------------------------------------------------------
-void LedCtrl_SetStable(LedFd led, const LedColor* color)
+void LedCtrl_SetStable(LedFd led, LedColor color)
 {
     //...
 }

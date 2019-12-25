@@ -2,7 +2,7 @@
 #include <stm32f4xx_rcc.h>
 #include <stm32f4xx_gpio.h>
 #include <stm32f4xx_tim.h>
-#include "ledctrl.h"
+#include "ledctrl/ledctrl.h"
 
 #define SWITCH_DELAY (100000)
 

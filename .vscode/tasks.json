@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Make",
+            "label": "All",
             "type": "shell",
             "command": "make",
             "args": ["PREFIX=/home/yulis/tools/gcc-arm-none-eabi/bin/arm-none-eabi"],
@@ -11,6 +11,18 @@
                 "isDefault": true
             },
             "problemMatcher": "$gcc",
+        },
+        {
+            "label": "ledctrl",
+            "type": "shell",
+            "command": "make",
+            "args": ["PREFIX=/home/yulis/tools/gcc-arm-none-eabi/bin/arm-none-eabi"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc",
+            "options": {"cwd": "${workspaceFolder}/projects/lab_4/ledctrl"},
         }
     ]
 }
