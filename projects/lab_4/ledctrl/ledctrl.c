@@ -14,11 +14,93 @@ struct _LedState
     enum LedMode mode;
     LedColor color;
     TIM_TypeDef* tim;
+    int32_t period;
+    int32_t counter;
+    uint8_t on;
 };
 
 //------------------------------------------------------------------------------------------------------------------
 #define FD_TB_LEN (8)
 static _LedState g_fdtb[FD_TB_LEN];
+
+#define SYSCLK (84000000)
+#define AHB_PRESC (1)
+#define APB1_PRESC (4)
+#define APBX (1)
+#define TIM_CLOCK ((SYSCLK) / (AHB_PRESC) / (APB1_PRESC) * (APBX))
+#define TIM_PRESCALER (8400)
+#define CLK_PER_SEC ((TIM_CLOCK) / (TIM_PRESCALER))
+
+//------------------------------------------------------------------------------------------------------------------
+static void _SetColor(TIM_TypeDef* tim, LedColor color);
+static void _LedToggle(LedFd led);
+static void _InitUpdateTimer(void);
+static void _InitLeds(GPIO_TypeDef* GPIOx, PinGroup group);
+static void _InitTimer(TIM_TypeDef* tim);
+static void _InitPwm(TIM_TypeDef* tim);
+static LedFd _GetFreeFd(void);
+static void _SetColor(TIM_TypeDef* tim, LedColor color);
+
+//------------------------------------------------------------------------------------------------------------------
+static void _LedToggle(LedFd led)
+{
+    if (led->on) {
+        led->on = 0;
+        _SetColor(led->tim, 0x0);
+    }
+    else {
+        led->on = 1;
+        _SetColor(led->tim, led->color);
+    }
+}
+
+//------------------------------------------------------------------------------------------------------------------
+void TIM2_IRQHandler(void)
+{
+    uint16_t i;
+    LedFd led;
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
+    {
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+
+        for (i=0; i < FD_TB_LEN; ++i)
+        {
+            led = &g_fdtb[i];
+            if (led->active && (led->mode == LED_MODE_BLINK))
+            {
+                led->counter += 1;
+                if (led->counter >= led->period)
+                {
+                    led->counter = 0;
+                    _LedToggle(led);
+                }
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------------------------------------------
+static void _InitUpdateTimer(void)
+{
+    TIM_TimeBaseInitTypeDef tim;
+    uint32_t period_clk = CLK_PER_SEC / 1000;
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+    tim.TIM_Prescaler = TIM_PRESCALER - 1;
+    tim.TIM_CounterMode = TIM_CounterMode_Up;
+    tim.TIM_Period = period_clk - 1;
+    tim.TIM_ClockDivision = TIM_CKD_DIV1;
+    tim.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM2, &tim);
+    TIM_Cmd(TIM2, ENABLE);
+    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+
+    NVIC_InitTypeDef nvic;
+    nvic.NVIC_IRQChannel = TIM2_IRQn;
+    nvic.NVIC_IRQChannelPreemptionPriority = 0;
+    nvic.NVIC_IRQChannelSubPriority = 1;
+    nvic.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&nvic);
+}
 
 //------------------------------------------------------------------------------------------------------------------
 static void _InitLeds(GPIO_TypeDef* GPIOx, PinGroup group)
@@ -101,14 +183,20 @@ LedFd LedCtrl_Config(GPIO_TypeDef* GPIOx, PinGroup group, TIM_TypeDef* tim)
     _InitLeds(GPIOx, group);
     _InitTimer(tim);
     _InitPwm(tim);
+    _InitUpdateTimer();
 
     LedFd led = _GetFreeFd();
+
     led->group = group;
     led->GPIOx = GPIOx;
     led->color = 0;
     led->active = 1;
     led->tim = tim;
+    led->period = 0;
+    led->counter = 0;
     led->mode = LED_MODE_STABLE;
+    led->on = 0;
+
     return led;
 }
 
@@ -118,6 +206,7 @@ static void _SetColor(TIM_TypeDef* tim, LedColor color)
     uint8_t r = (color >> 16) & 0xFF;
     uint8_t g = (color >> 8) & 0xFF;
     uint8_t b = (color) & 0xFF;
+
     tim->CCR1 = r;
     tim->CCR2 = g;
     tim->CCR3 = b;
@@ -145,16 +234,22 @@ enum LedMode LedCtrl_GetMode(LedFd led)
 void LedCtrl_SetStable(LedFd led, LedColor color)
 {
     led->color = color;
+    led->mode = LED_MODE_STABLE;
 }
 
 //------------------------------------------------------------------------------------------------------------------
 void LedCtrl_SetPulseFreq(LedFd led, LedColor color, int freq)
 {
-    //...
+    led->color = color;
+    led->period = CLK_PER_SEC / freq;
+    led->counter = 0;
+    led->mode = LED_MODE_BLINK;
 }
 
 //------------------------------------------------------------------------------------------------------------------
 void LedCtrl_SetGradientMode(LedFd led)
 {
+    //...
+    //...
     //...
 }

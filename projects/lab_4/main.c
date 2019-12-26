@@ -69,7 +69,8 @@ int main(void)
     g_led = LedCtrl_Config(GPIOA, g, TIM1);
 
     //set stable color
-    LedCtrl_SetStable(g_led, 0xCD5C5C);
+    //LedCtrl_SetStable(g_led, 0xCD5C5C);
+    LedCtrl_SetPulseFreq(g_led, 0xCD5C5C, 1);
 
     while(1)
     {
