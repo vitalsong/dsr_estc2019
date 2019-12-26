@@ -19,6 +19,10 @@ struct _LedState
     uint8_t on;
 };
 
+#define GRADIENT_COLOR_SIZE (11)
+const uint32_t GRADIENT_COLOR[GRADIENT_COLOR_SIZE] = 
+{0xE5004B, 0xCE1350, 0xB72655, 0xA0395A, 0x894C60, 0x725F65, 0x5B726A, 0x448570, 0x2D9875, 0x16AB7A, 0x00BF80};
+
 //------------------------------------------------------------------------------------------------------------------
 #define FD_TB_LEN (8)
 static _LedState g_fdtb[FD_TB_LEN];
@@ -40,6 +44,14 @@ static void _InitTimer(TIM_TypeDef* tim);
 static void _InitPwm(TIM_TypeDef* tim);
 static LedFd _GetFreeFd(void);
 static void _SetColor(TIM_TypeDef* tim, LedColor color);
+static void _NextColor(LedFd led);
+
+//------------------------------------------------------------------------------------------------------------------
+static void _NextColor(LedFd led)
+{
+    led->color = (led->color + 1) % GRADIENT_COLOR_SIZE;
+    _SetColor(led->tim, GRADIENT_COLOR[led->color]);
+}
 
 //------------------------------------------------------------------------------------------------------------------
 static void _LedToggle(LedFd led)
@@ -66,13 +78,18 @@ void TIM2_IRQHandler(void)
         for (i=0; i < FD_TB_LEN; ++i)
         {
             led = &g_fdtb[i];
-            if (led->active && (led->mode == LED_MODE_BLINK))
+            if (led->active && (led->mode != LED_MODE_STABLE))
             {
                 led->counter += 1;
                 if (led->counter >= led->period)
                 {
                     led->counter = 0;
-                    _LedToggle(led);
+                    if (led->mode == LED_MODE_BLINK) {
+                        _LedToggle(led);
+                    }
+                    else if (led->mode == LED_MODE_GRADIENT) {
+                        _NextColor(led);
+                    }
                 }
             }
         }
@@ -249,7 +266,7 @@ void LedCtrl_SetPulseFreq(LedFd led, LedColor color, int freq)
 //------------------------------------------------------------------------------------------------------------------
 void LedCtrl_SetGradientMode(LedFd led)
 {
-    //...
-    //...
-    //...
+    led->mode = LED_MODE_GRADIENT;
+    led->counter = 0;
+    led->period = 100;
 }

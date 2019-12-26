@@ -70,10 +70,10 @@ int main(void)
 
     //set stable color
     //LedCtrl_SetStable(g_led, 0xCD5C5C);
-    LedCtrl_SetPulseFreq(g_led, 0xCD5C5C, 1);
+    //LedCtrl_SetPulseFreq(g_led, 0xCD5C5C, 1);
+    LedCtrl_SetGradientMode(g_led);
 
-    while(1)
-    {
+    while(1)   {
         if (!GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0)) {
             _OnClickButton1();
         }
