@@ -20,21 +20,16 @@ struct _LedState
     uint8_t on;
 };
 
-#define GRADIENT_COLOR_SIZE (11)
+#define GRADIENT_COLOR_SIZE (20)
 const uint32_t GRADIENT_COLOR[GRADIENT_COLOR_SIZE] = 
-{0xE5004B, 0xCE1350, 0xB72655, 0xA0395A, 0x894C60, 0x725F65, 0x5B726A, 0x448570, 0x2D9875, 0x16AB7A, 0x00BF80};
+{0xE5004B, 0xCE1350, 0xB72655, 0xA0395A, 0x894C60, 0x725F65, 0x5B726A, 0x448570, 0x2D9875, 0x16AB7A, 0x00BF80,
+0x16AB7A, 0x2D9875, 0x448570, 0x5B726A, 0x725F65, 0x894C60, 0xA0395A, 0xB72655, 0xCE1350};
 
 //------------------------------------------------------------------------------------------------------------------
 #define FD_TB_LEN (8)
 static _LedState g_fdtb[FD_TB_LEN];
 
 #define SYSCLK (84000000)
-#define AHB_PRESC (1)
-#define APB1_PRESC (4)
-#define APBX (1)
-#define TIM_CLOCK ((SYSCLK) / (AHB_PRESC) / (APB1_PRESC) * (APBX))
-#define TIM_PRESCALER (8400)
-#define CLK_PER_SEC ((TIM_CLOCK) / (TIM_PRESCALER))
 
 //------------------------------------------------------------------------------------------------------------------
 static void _SetColor(TIM_TypeDef* tim, LedColor color);
@@ -112,8 +107,16 @@ void TIM2_IRQHandler(void)
 //------------------------------------------------------------------------------------------------------------------
 static void _InitUpdateTimer(void)
 {
+    //TIM2 config
+    const int32_t AHB_PRESC = 1;
+    const int32_t APB1_PRESC = 4;
+    const int32_t APBX = 1;
+    const int32_t TIM_CLK = SYSCLK / AHB_PRESC / APB1_PRESC * APBX;
+    const int32_t TIM_PRESCALER = 2100;
+    const int32_t CLK_PER_SEC = TIM_CLK / TIM_PRESCALER;
+
     TIM_TimeBaseInitTypeDef tim;
-    uint32_t period_clk = CLK_PER_SEC / 1000;
+    uint32_t period_clk = CLK_PER_SEC / 1000;   //every 1ms
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
     tim.TIM_Prescaler = TIM_PRESCALER - 1;
     tim.TIM_CounterMode = TIM_CounterMode_Up;
@@ -152,11 +155,16 @@ static void _InitLeds(GPIO_TypeDef* GPIOx, PinGroup group)
 //------------------------------------------------------------------------------------------------------------------
 static void _InitTimer(TIM_TypeDef* tim)
 {
+    const int32_t TIM_FREQ = 25600;
+    const int32_t PWM_FREQ = 100;
+    const int32_t ARR_VAL = TIM_FREQ/PWM_FREQ;  //need to be 256
+    const int32_t PSC = SYSCLK/TIM_FREQ;
+
     TIM_TimeBaseInitTypeDef timer;
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
     TIM_TimeBaseStructInit(&timer);
-    timer.TIM_Prescaler = 840 - 1;
-    timer.TIM_Period = 255;
+    timer.TIM_Prescaler = PSC - 1;
+    timer.TIM_Period = ARR_VAL - 1;
     timer.TIM_ClockDivision = 0;
     timer.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(tim, &timer);
@@ -276,7 +284,7 @@ void LedCtrl_SetStable(LedFd led, LedColor color)
 void LedCtrl_SetPulseFreq(LedFd led, LedColor color, int freq)
 {
     led->color = color;
-    led->period = CLK_PER_SEC / freq;
+    led->period = 1000 / freq;
     led->counter = 0;
     led->mode = LED_MODE_BLINK;
 }
