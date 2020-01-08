@@ -8,14 +8,15 @@
 //------------------------------------------------------------------------------------------------------------------
 struct _LedState
 {
-    int8_t active;
-    GPIO_TypeDef* GPIOx;
+    int8_t _init;
+    GPIO_TypeDef* gpiox;
     PinGroup group;
     enum LedMode mode;
     LedColor color;
     TIM_TypeDef* tim;
     int32_t period;
     int32_t counter;
+    uint8_t toggled;
     uint8_t on;
 };
 
@@ -45,6 +46,7 @@ static void _InitPwm(TIM_TypeDef* tim);
 static LedFd _GetFreeFd(void);
 static void _SetColor(TIM_TypeDef* tim, LedColor color);
 static void _NextColor(LedFd led);
+static void _CheckLed(LedFd led);
 
 //------------------------------------------------------------------------------------------------------------------
 static void _NextColor(LedFd led)
@@ -56,13 +58,38 @@ static void _NextColor(LedFd led)
 //------------------------------------------------------------------------------------------------------------------
 static void _LedToggle(LedFd led)
 {
-    if (led->on) {
-        led->on = 0;
+    if (led->toggled)
+    {
+        led->toggled = 0;
         _SetColor(led->tim, 0x0);
     }
-    else {
-        led->on = 1;
+    else
+    {
+        led->toggled = 1;
         _SetColor(led->tim, led->color);
+    }
+}
+
+//------------------------------------------------------------------------------------------------------------------
+static void _CheckLed(LedFd led)
+{
+    if ((!led->_init) || (!led->on)) {
+        return;
+    }
+
+    if (led->mode != LED_MODE_STABLE)
+    {
+        led->counter += 1;
+        if (led->counter >= led->period)
+        {
+            led->counter = 0;
+            if (led->mode == LED_MODE_BLINK) {
+                _LedToggle(led);
+            }
+            else if (led->mode == LED_MODE_GRADIENT) {
+                _NextColor(led);
+            }
+        }
     }
 }
 
@@ -74,24 +101,10 @@ void TIM2_IRQHandler(void)
     if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
     {
         TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-
         for (i=0; i < FD_TB_LEN; ++i)
         {
             led = &g_fdtb[i];
-            if (led->active && (led->mode != LED_MODE_STABLE))
-            {
-                led->counter += 1;
-                if (led->counter >= led->period)
-                {
-                    led->counter = 0;
-                    if (led->mode == LED_MODE_BLINK) {
-                        _LedToggle(led);
-                    }
-                    else if (led->mode == LED_MODE_GRADIENT) {
-                        _NextColor(led);
-                    }
-                }
-            }
+            _CheckLed(led);
         }
     }
 }
@@ -177,7 +190,7 @@ void LedCtrl_Init(void)
 {
     int i;
     for (i=0; i < FD_TB_LEN; ++i) {
-        g_fdtb[i].active = 0;
+        g_fdtb[i]._init = 0;
     }
 }
 
@@ -186,7 +199,7 @@ static LedFd _GetFreeFd(void)
 {
     int i;
     for (i=0; i < FD_TB_LEN; ++i) {
-        if (!g_fdtb[i].active) {
+        if (!g_fdtb[i]._init) {
             return &g_fdtb[i];
         }
     }
@@ -205,13 +218,14 @@ LedFd LedCtrl_Config(GPIO_TypeDef* GPIOx, PinGroup group, TIM_TypeDef* tim)
     LedFd led = _GetFreeFd();
 
     led->group = group;
-    led->GPIOx = GPIOx;
+    led->gpiox = GPIOx;
     led->color = 0;
-    led->active = 1;
+    led->_init = 1;
     led->tim = tim;
     led->period = 0;
     led->counter = 0;
     led->mode = LED_MODE_STABLE;
+    led->toggled = 0;
     led->on = 0;
 
     return led;
@@ -232,12 +246,16 @@ static void _SetColor(TIM_TypeDef* tim, LedColor color)
 //------------------------------------------------------------------------------------------------------------------
 void LedCtrl_On(LedFd led)
 {
-    _SetColor(led->tim, led->color);
+    led->on = 1;
+    if (led->mode == LED_MODE_STABLE) {
+        _SetColor(led->tim, led->color);
+    }
 }
 
 //------------------------------------------------------------------------------------------------------------------
 void LedCtrl_Off(LedFd led)
 {
+    led->on = 0;
     _SetColor(led->tim, 0);
 }
 

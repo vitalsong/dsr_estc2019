@@ -69,9 +69,12 @@ int main(void)
     g_led = LedCtrl_Config(GPIOA, g, TIM1);
 
     //set stable color
-    //LedCtrl_SetStable(g_led, 0xCD5C5C);
-    //LedCtrl_SetPulseFreq(g_led, 0xCD5C5C, 1);
-    LedCtrl_SetGradientMode(g_led);
+    LedCtrl_SetStable(g_led, 0xCD5C5C);
+    //LedCtrl_SetPulseFreq(g_led, 0xCD5C5C, 5);
+    //LedCtrl_SetGradientMode(g_led);
+
+    //enable
+    LedCtrl_On(g_led);
 
     while(1)   {
         if (!GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_0)) {
